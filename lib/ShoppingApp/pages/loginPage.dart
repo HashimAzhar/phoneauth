@@ -15,53 +15,81 @@ class loginPage extends StatefulWidget {
 }
 
 class _loginPageState extends State<loginPage> {
-  String Email = '', Password = '';
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  final _formkey = GlobalKey<FormState>();
-  bool isloading = false;
+  String email = '', password = '';
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool isLoading = false;
   bool isPasswordVisible = false;
 
-  // Function to fetch user details from Firestore and save to SharedPreferences
-  Future<void> fetchAndSaveUserDetails(String userId) async {
+  // Function to fetch user details by email from Firestore and save to SharedPreferences
+  Future<void> fetchAndSaveUserDetailsByEmail(String email) async {
     try {
-      // Fetch user details from Firestore
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+      print("Fetching details for email: $email");
+
+      // Query Firestore for user details by email
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Userss')
-          .doc(userId)
+          .where('Email', isEqualTo: email)
           .get();
 
-      if (userDoc.exists) {
+      print("Query result: ${querySnapshot.docs.length} documents found.");
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Get the first matching document
+        DocumentSnapshot userDoc = querySnapshot.docs.first;
+
         // Extract user data
-        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
 
-        // Save details in SharedPreferences
-        await sharedPreferenceHelper().saveUserName(userData['Name']);
-        await sharedPreferenceHelper().saveUserEmail(userData['Email']);
-        await sharedPreferenceHelper().saveUserImage(userData['Image']);
-
-        print("User details saved successfully.");
+        if (userData != null) {
+          // Save details in SharedPreferences
+          await sharedPreferenceHelper().saveUserName(userData['Name']);
+          await sharedPreferenceHelper().saveUserEmail(userData['Email']);
+          await sharedPreferenceHelper().saveUserImage(userData['Image']);
+          print("User details saved successfully.");
+        } else {
+          print("User data is null.");
+        }
       } else {
-        print("User document does not exist in Firestore.");
+        print("No user found with the provided email.");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text(
+              'No user found with the provided email.',
+              style: TextStyle(fontSize: 16),
+            )));
       }
     } catch (e) {
       print("Error fetching user details: $e");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Error fetching user details.',
+            style: TextStyle(fontSize: 16),
+          )));
     }
   }
 
   // User login method
-  userLogin() async {
+  Future<void> userLogin() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       // Sign in with Firebase Authentication
       UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: Email, password: Password);
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      print("User logged in: ${userCredential.user?.email}");
 
       // Fetch and save user details after successful login
-      String userId = userCredential.user!.uid;
-      await fetchAndSaveUserDetails(userId);
+      await fetchAndSaveUserDetailsByEmail(email);
 
       // Navigate to the home page
-      Navigator.push(
+      Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => bottomNav()));
 
       // Show success message
@@ -72,7 +100,6 @@ class _loginPageState extends State<loginPage> {
             style: TextStyle(fontSize: 20),
           )));
     } on FirebaseAuthException catch (e) {
-      // Handle specific errors
       if (e.code == 'user-not-found') {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: Colors.redAccent,
@@ -89,11 +116,10 @@ class _loginPageState extends State<loginPage> {
             )));
       }
     } catch (e) {
-      // General error handling
       print("Error during login: $e");
     } finally {
       setState(() {
-        isloading = false;
+        isLoading = false;
       });
     }
   }
@@ -101,11 +127,11 @@ class _loginPageState extends State<loginPage> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: _formkey,
+      key: _formKey,
       child: Scaffold(
         body: SingleChildScrollView(
           child: Container(
-            margin: EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 40),
+            margin: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -118,25 +144,16 @@ class _loginPageState extends State<loginPage> {
                     style: appWidget.semiBoldTextFieldStyle(),
                   ),
                 ),
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 20),
                 Center(
                   child: Text(
                     'To Proceed, Please Enter Your \n              Details Below',
                     style: appWidget.lightTextFieldStyle(),
                   ),
                 ),
-                SizedBox(
-                  height: 40,
-                ),
-                Text(
-                  'Email',
-                  style: appWidget.semiBoldTextFieldStyle(),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 40),
+                Text('Email', style: appWidget.semiBoldTextFieldStyle()),
+                SizedBox(height: 20),
                 Container(
                   padding: EdgeInsets.only(left: 20),
                   decoration: BoxDecoration(
@@ -144,28 +161,17 @@ class _loginPageState extends State<loginPage> {
                     color: Color(0xFFF4F5F9),
                   ),
                   child: TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return ('Please Enter your Email');
-                      } else {
-                        return null;
-                      }
-                    },
                     controller: emailController,
                     decoration: InputDecoration(
                         hintText: 'Enter Email', border: InputBorder.none),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Enter your email'
+                        : null,
                   ),
                 ),
-                SizedBox(
-                  height: 20,
-                ),
-                Text(
-                  'Password',
-                  style: appWidget.semiBoldTextFieldStyle(),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 20),
+                Text('Password', style: appWidget.semiBoldTextFieldStyle()),
+                SizedBox(height: 20),
                 Container(
                   padding: EdgeInsets.only(left: 20),
                   decoration: BoxDecoration(
@@ -173,15 +179,8 @@ class _loginPageState extends State<loginPage> {
                     color: Color(0xFFF4F5F9),
                   ),
                   child: TextFormField(
-                    obscureText: !isPasswordVisible,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return ('Please Enter your Password');
-                      } else {
-                        return null;
-                      }
-                    },
                     controller: passwordController,
+                    obscureText: !isPasswordVisible,
                     decoration: InputDecoration(
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -197,51 +196,25 @@ class _loginPageState extends State<loginPage> {
                         ),
                         hintText: 'Enter Password',
                         border: InputBorder.none),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Enter your password'
+                        : null,
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 30,
-                ),
+                SizedBox(height: 30),
                 Center(
                   child: GestureDetector(
                     onTap: () {
-                      if (_formkey.currentState!.validate()) {
+                      if (_formKey.currentState!.validate()) {
                         setState(() {
-                          Email = emailController.text;
-                          Password = passwordController.text;
-                        });
-                        setState(() {
-                          isloading = true;
+                          email = emailController.text.trim();
+                          password = passwordController.text.trim();
                         });
                         userLogin();
                       }
                     },
-                    child: isloading
-                        ? Container(
-                            height: 50,
-                            width: 50,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.green,
-                            ),
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 3,
-                            ),
-                          )
+                    child: isLoading
+                        ? CircularProgressIndicator()
                         : Container(
                             width: MediaQuery.of(context).size.width / 2,
                             padding: EdgeInsets.all(20),
@@ -261,9 +234,7 @@ class _loginPageState extends State<loginPage> {
                           ),
                   ),
                 ),
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
