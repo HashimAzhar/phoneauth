@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:phoneauth/fireBaseServices/widgets/roundButton.dart';
 import 'package:phoneauth/ui/auth/loginWithPhoneNumber.dart';
 import 'package:phoneauth/ui/auth/signUpScreen.dart';
+import 'package:phoneauth/ui/forgotPassword.dart';
 import 'package:phoneauth/ui/posts/postScreen.dart';
 import 'package:phoneauth/ui/utils/utils.dart';
 
@@ -141,8 +142,17 @@ class _loginScreenState extends State<loginScreen> {
                   }
                 },
               ),
-              const SizedBox(
-                height: 30,
+              Align(
+                alignment: Alignment.bottomRight,
+                child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ForgotpasswordSceen()));
+                    },
+                    child: const Text('Forgot Password?')),
               ),
               Row(
                 children: [
@@ -154,7 +164,7 @@ class _loginScreenState extends State<loginScreen> {
                             MaterialPageRoute(
                                 builder: (context) => const signUpScreen()));
                       },
-                      child: const Text('Sign up'))
+                      child: const Text('Sign up')),
                 ],
               ),
               const Text('OR'),

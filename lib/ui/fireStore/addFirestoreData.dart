@@ -1,24 +1,27 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:phoneauth/fireBaseServices/widgets/roundButton.dart';
+import 'package:phoneauth/ui/fireStore/firestoreListScreen.dart';
 import 'package:phoneauth/ui/utils/utils.dart';
 
-class addPostScreen extends StatefulWidget {
-  const addPostScreen({super.key});
+class addFirestoreData extends StatefulWidget {
+  const addFirestoreData({super.key});
 
   @override
-  State<addPostScreen> createState() => _addPostScreenState();
+  State<addFirestoreData> createState() => _addFirestoreDataState();
 }
 
-class _addPostScreenState extends State<addPostScreen> {
+class _addFirestoreDataState extends State<addFirestoreData> {
   bool loading = false;
   final postController = TextEditingController();
   final databaseRef = FirebaseDatabase.instance.ref('Post');
+  final fireStore = FirebaseFirestore.instance.collection('users');
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Post'),
+        title: const Text('Add Firestore Data'),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -44,17 +47,20 @@ class _addPostScreenState extends State<addPostScreen> {
                   setState(() {
                     loading = true;
                   });
-                  String id = DateTime.now().microsecondsSinceEpoch.toString();
-                  databaseRef.child(id).set({
+                  String id = DateTime.now().millisecondsSinceEpoch.toString();
+                  fireStore.doc(id).set({
                     'title': postController.text.toString(),
                     'id': id,
                   }).then((value) {
                     setState(() {
                       loading = false;
                     });
-                    Utils().toastMessage('Post added');
-                    postController.clear();
-                  }).onError((error, stackTrace) {
+                    Utils().toastMessage('Post Added');
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (conetext) => fireStoreScreen()));
+                  }).onError((error, StackTrace) {
                     setState(() {
                       loading = false;
                     });

@@ -1,25 +1,26 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phoneauth/ui/auth/loginScreen.dart';
+import 'package:phoneauth/ui/fireStore/addFirestoreData.dart';
 import 'package:phoneauth/ui/posts/addPost.dart';
 import 'package:phoneauth/ui/utils/utils.dart';
 
-class postScreen extends StatefulWidget {
-  const postScreen({super.key});
+class fireStoreScreen extends StatefulWidget {
+  const fireStoreScreen({super.key});
 
   @override
-  State<postScreen> createState() => _postScreenState();
+  State<fireStoreScreen> createState() => _fireStoreScreenState();
 }
 
-class _postScreenState extends State<postScreen> {
+class _fireStoreScreenState extends State<fireStoreScreen> {
   final auth = FirebaseAuth.instance;
-  final ref = FirebaseDatabase.instance.ref('Post');
-  final searchFilter = TextEditingController();
   final editController = TextEditingController();
-
+  final fireStore = FirebaseFirestore.instance.collection('users').snapshots();
+  CollectionReference ref = FirebaseFirestore.instance.collection('users');
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -30,7 +31,7 @@ class _postScreenState extends State<postScreen> {
       child: Scaffold(
           appBar: AppBar(
             centerTitle: true,
-            title: const Text('Post Screen'),
+            title: const Text('Firestore'),
             automaticallyImplyLeading: false,
             actions: [
               IconButton(
@@ -53,51 +54,22 @@ class _postScreenState extends State<postScreen> {
               const SizedBox(
                 height: 10,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: TextFormField(
-                    controller: searchFilter,
-                    decoration: const InputDecoration(
-                      hintText: 'Search',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (String value) {
-                      setState(() {});
-                    }),
-              ),
-              // Expanded(
-              //     child: StreamBuilder(
-              //         stream: ref.onValue,
-              //         builder:
-              //             (context, AsyncSnapshot<DatabaseEvent> snapshot) {
-              //           if (!snapshot.hasData) {
-              //             return CircularProgressIndicator();
-              //           } else {
-              //             Map<dynamic, dynamic> map =
-              //                 snapshot.data!.snapshot.value as dynamic;
-              //             List<dynamic> list = [];
-              //             list.clear();
-              //             list = map.values.toList();
-
-              //             return ListView.builder(
-              //                 itemCount:
-              //                     snapshot.data!.snapshot.children.length,
-              //                 itemBuilder: (context, index) {
-              //                   return ListTile(
-              //                     title: Text(list[index]['title']),
-              //                     subtitle: Text(list[index]['id']),
-              //                   );
-              //                 });
-              //           }
-              //         })),
-              Expanded(
-                  child: FirebaseAnimatedList(
-                      query: ref,
-                      defaultChild: const Text('Loading'),
-                      itemBuilder: (context, snapshot, animation, index) {
-                        final title = snapshot.child('title').value.toString();
-                        final id = snapshot.child('id').value.toString();
-                        if (searchFilter.text.isEmpty) {
+              StreamBuilder<QuerySnapshot>(
+                  stream: fireStore,
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      return CircularProgressIndicator();
+                    if (snapshot.hasError)
+                      return Text('Some Error has occoured');
+                    return Expanded(
+                      child: ListView.builder(
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          final title =
+                              snapshot.data!.docs[index]['title'].toString();
+                          final id =
+                              snapshot.data!.docs[index]['id'].toString();
                           return ListTile(
                             title: Text(title),
                             subtitle: Text(id),
@@ -120,40 +92,17 @@ class _postScreenState extends State<postScreen> {
                                             const Icon(Icons.delete_outline),
                                         onTap: () {
                                           Navigator.pop(context);
-                                          ref.child(id).remove();
+                                          ref.doc(id).delete();
+                                          Utils().toastMessage('Post Deleted');
                                         },
                                         title: const Text('Delete'),
                                       ))
                                     ]),
                           );
-                        } else if (title.toLowerCase().contains(
-                            searchFilter.text.toLowerCase().toLowerCase())) {
-                          return ListTile(
-                              title: Text(title),
-                              subtitle: Text(id),
-                              trailing: PopupMenuButton(
-                                  icon: const Icon(Icons.more_vert),
-                                  itemBuilder: (context) => [
-                                        PopupMenuItem(
-                                            value: 1,
-                                            child: ListTile(
-                                              onTap: () {
-                                                Navigator.pop(context);
-                                                showMyDialog(title, id);
-                                              },
-                                              leading: const Icon(Icons.edit),
-                                              title: const Text('Edit'),
-                                            )),
-                                        const PopupMenuItem(
-                                            child: ListTile(
-                                          leading: Icon(Icons.delete_outline),
-                                          title: Text('Delete'),
-                                        ))
-                                      ]));
-                        } else {
-                          return Container();
-                        }
-                      }))
+                        },
+                      ),
+                    );
+                  }),
             ],
           ),
           floatingActionButton: FloatingActionButton(
@@ -161,7 +110,7 @@ class _postScreenState extends State<postScreen> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const addPostScreen()));
+                      builder: (context) => const addFirestoreData()));
             },
             child: const Icon(Icons.add),
           )),
@@ -193,7 +142,7 @@ class _postScreenState extends State<postScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                     ref
-                        .child(Id)
+                        .doc(Id)
                         .update({'title': editController.text.toString()}).then(
                             (value) {
                       Utils().toastMessage('Post Updated');
