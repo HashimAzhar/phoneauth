@@ -32,6 +32,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   String? userImage;
   String? userName;
   String id = DateTime.now().millisecondsSinceEpoch.toString();
+  bool _isProcessingPayment = false; // To track payment processing state
 
   @override
   void initState() {
@@ -53,6 +54,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive text and button adjustments
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     Future<void> buyFunction() async {
       if (email != null) {
         Map<String, dynamic> addProductDetails = {
@@ -87,7 +92,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 Center(
                   child: Image.network(
                     widget.image,
-                    height: 400,
+                    height: screenHeight * 0.4, // Adjust based on screen size
+                    width: screenWidth * 0.8, // Adjust based on screen size
+                    fit: BoxFit.contain, // Ensure image is responsive
                   ),
                 ),
                 GestureDetector(
@@ -109,7 +116,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             Expanded(
               child: Container(
                 padding: EdgeInsets.only(left: 20, top: 20, right: 20),
-                width: MediaQuery.of(context).size.width,
+                width: screenWidth,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
@@ -123,12 +130,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Product Name - wrap with Expanded to allow wrapping text
+                        // Product Name
                         Expanded(
                           child: Text(
                             widget.name,
                             style: TextStyle(
-                              fontSize: 24,
+                              fontSize: screenWidth * 0.06, // Adjust text size
                               fontWeight: FontWeight.bold,
                             ),
                             softWrap:
@@ -141,7 +148,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           '\$${widget.price}',
                           style: TextStyle(
                             color: Color(0xFFfd6f3e),
-                            fontSize: 24,
+                            fontSize: screenWidth * 0.06, // Adjust text size
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -151,40 +158,54 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     Text(
                       'Details',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: screenWidth * 0.05, // Adjust text size
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     SizedBox(height: 20),
                     Text(
                       widget.detail,
-                      style: TextStyle(fontSize: 18),
+                      style: TextStyle(
+                          fontSize: screenWidth * 0.05), // Adjust text size
                     ),
                     Spacer(),
                     GestureDetector(
                       onTap: () async {
+                        setState(() {
+                          _isProcessingPayment = true; // Start processing
+                        });
+
                         bool paymentSuccessful =
                             await makePayment(widget.price);
                         if (paymentSuccessful) {
                           await buyFunction();
                         }
+
+                        setState(() {
+                          _isProcessingPayment = false; // Stop processing
+                        });
                       },
                       child: Container(
-                        padding: EdgeInsets.all(10),
-                        width: MediaQuery.of(context).size.width,
+                        padding: EdgeInsets.all(15),
+                        width: screenWidth,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           color: Color.fromARGB(255, 38, 33, 32),
                         ),
                         child: Center(
-                          child: Text(
-                            'Buy Now',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
+                          child: _isProcessingPayment
+                              ? CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  'Buy Now',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize:
+                                        screenWidth * 0.06, // Adjust text size
+                                  ),
+                                ),
                         ),
                       ),
                     ),

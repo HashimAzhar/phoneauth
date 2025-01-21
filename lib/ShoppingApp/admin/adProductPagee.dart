@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
-
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,6 +20,7 @@ class _AdproductpageeState extends State<Adproductpagee> {
   TextEditingController detailController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? selectedImage;
+  bool isLoading = false;
 
   Future getImage() async {
     var image = await _picker.pickImage(source: ImageSource.gallery);
@@ -38,6 +37,10 @@ class _AdproductpageeState extends State<Adproductpagee> {
 
   uploadItem() async {
     if (selectedImage != null && nameController.text.isNotEmpty) {
+      setState(() {
+        isLoading = true;
+      });
+
       String addId = randomAlphaNumeric(10);
       Reference firebaseStorageRef =
           FirebaseStorage.instance.ref().child('blogImage').child(addId);
@@ -63,12 +66,16 @@ class _AdproductpageeState extends State<Adproductpagee> {
           nameController.text = '';
           detailController.text = '';
           priceController.text = '';
+          isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           backgroundColor: Colors.green,
           content: Text('Product added successfully!'),
         ));
       }).catchError((e) {
+        setState(() {
+          isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           backgroundColor: Colors.redAccent,
           content: Text('An error occurred: $e'),
@@ -93,6 +100,9 @@ class _AdproductpageeState extends State<Adproductpagee> {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -104,7 +114,10 @@ class _AdproductpageeState extends State<Adproductpagee> {
         title: Text('Add Product'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.05,
+          vertical: screenHeight * 0.02,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -112,14 +125,14 @@ class _AdproductpageeState extends State<Adproductpagee> {
               'Upload the Product Image',
               style: appWidget.lightTextFieldStyle(),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: screenHeight * 0.02),
             selectedImage == null
                 ? GestureDetector(
                     onTap: getImage,
                     child: Center(
                       child: Container(
-                        height: 200,
-                        width: 200,
+                        height: screenHeight * 0.25,
+                        width: screenWidth * 0.5,
                         decoration: BoxDecoration(
                           color: Color(0xFFF4F5F9),
                           border: Border.all(color: Colors.black38),
@@ -140,8 +153,8 @@ class _AdproductpageeState extends State<Adproductpagee> {
                         elevation: 4.0,
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          height: 200,
-                          width: 200,
+                          height: screenHeight * 0.25,
+                          width: screenWidth * 0.5,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.black38),
                             borderRadius: BorderRadius.circular(20),
@@ -157,7 +170,7 @@ class _AdproductpageeState extends State<Adproductpagee> {
                       ),
                     ),
                   ),
-            SizedBox(height: 20),
+            SizedBox(height: screenHeight * 0.02),
             Text('Product Name', style: appWidget.lightTextFieldStyle()),
             SizedBox(height: 10),
             Container(
@@ -245,11 +258,20 @@ class _AdproductpageeState extends State<Adproductpagee> {
             SizedBox(height: 40),
             Center(
               child: ElevatedButton(
-                onPressed: uploadItem,
-                child: Text(
-                  'Add Product',
-                  style: TextStyle(fontSize: 22),
-                ),
+                onPressed: isLoading ? null : uploadItem,
+                child: isLoading
+                    ? SizedBox(
+                        height: 25,
+                        width: 25,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Add Product',
+                        style: TextStyle(fontSize: 22),
+                      ),
               ),
             ),
           ],

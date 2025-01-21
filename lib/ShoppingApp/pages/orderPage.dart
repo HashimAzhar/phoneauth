@@ -37,6 +37,23 @@ class _orderPageState extends State<orderPage> {
     setState(() {});
   }
 
+  TextStyle universalTitleStyle(BuildContext context) => TextStyle(
+        fontSize: MediaQuery.of(context).size.width * 0.05,
+        fontWeight: FontWeight.bold,
+      );
+
+  TextStyle universalPriceStyle(BuildContext context) => TextStyle(
+        fontSize: MediaQuery.of(context).size.width * 0.045,
+        color: const Color(0xFFfd6f3e),
+        fontWeight: FontWeight.w600,
+      );
+
+  TextStyle universalStatusStyle(BuildContext context) => TextStyle(
+        fontSize: MediaQuery.of(context).size.width * 0.04,
+        color: const Color(0xFFfd6f3e),
+        fontWeight: FontWeight.w500,
+      );
+
   Widget allOrders() {
     return StreamBuilder(
       stream: orderStream,
@@ -71,42 +88,35 @@ class _orderPageState extends State<orderPage> {
                   child: Stack(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(
-                            left: 10, top: 10, bottom: 10, right: 10),
+                        padding: const EdgeInsets.all(10),
                         child: Row(
                           children: [
                             Image.network(
                               ds['Image'],
-                              height: 100,
-                              width: 100,
+                              height: MediaQuery.of(context).size.height * 0.15,
+                              width: MediaQuery.of(context).size.height * 0.15,
                               fit: BoxFit.cover,
                             ),
                             const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  ds['productName'],
-                                  style: appWidget.boldTextFieldStyle(),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  '\$${ds['Price']}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFfd6f3e),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ds['productName'],
+                                    style: universalTitleStyle(context),
                                   ),
-                                ),
-                                Text(
-                                  'Status: ${ds['Status']}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFfd6f3e),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    '\$${ds['Price']}',
+                                    style: universalPriceStyle(context),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    'Status: ${ds['Status']}',
+                                    style: universalStatusStyle(context),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -151,14 +161,14 @@ class _orderPageState extends State<orderPage> {
     return Scaffold(
       backgroundColor: const Color(0xfff2f2f2),
       appBar: AppBar(
-        backgroundColor: const Color(0xfff2f2f2),
+        backgroundColor: Color.fromARGB(255, 143, 141, 141),
         title: Text(
           'Current Orders',
-          style: appWidget.boldTextFieldStyle(),
+          style: universalTitleStyle(context),
         ),
       ),
       body: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
+        margin: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 20),
         child: Column(
           children: [Expanded(child: allOrders())],
         ),
@@ -166,7 +176,7 @@ class _orderPageState extends State<orderPage> {
     );
   }
 
-  Future<void> showMyDialog(String Id) async {
+  Future<void> showMyDialog(String id) async {
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -181,9 +191,9 @@ class _orderPageState extends State<orderPage> {
               TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    databaseMethods().deleteOrder(Id).then((value) {
+                    databaseMethods().deleteOrder(id).then((value) {
                       Utils().toastMessage('Order Deleted');
-                    }).onError((error, StackTrace) {
+                    }).onError((error, stackTrace) {
                       Utils().toastMessage(error.toString());
                     });
                   },

@@ -42,8 +42,9 @@ class _productsCategoryState extends State<productsCategory> {
           itemCount: snapshot.data.docs.length,
           padding: EdgeInsets.all(10),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.65, // Maintain proper aspect ratio
+            crossAxisCount: 2, // Two items per row
+            childAspectRatio: MediaQuery.of(context).size.width /
+                (MediaQuery.of(context).size.height * 0.75),
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
           ),
@@ -70,15 +71,20 @@ class _productsCategoryState extends State<productsCategory> {
                   ),
                   SizedBox(height: 10),
 
-                  // Product Name
-                  Text(
-                    ds['Name'],
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                  // Product Name with Truncated Text
+                  Flexible(
+                    child: Text(
+                      ds['Name'],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
+                  SizedBox(height: 5),
 
                   // Price and Add Button
                   Row(
@@ -148,7 +154,7 @@ class _productsCategoryState extends State<productsCategory> {
         ),
       ),
       body: Container(
-        margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
+        margin: EdgeInsets.only(left: 5, right: 5, bottom: 5),
         child: allProducts(),
       ),
     );

@@ -110,7 +110,7 @@ class _adminHomePageState extends State<adminHomePage> {
                 elevation: 3,
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.push(context,
+                    Navigator.pushReplacement(context,
                         MaterialPageRoute(builder: (context) => bottomNav()));
                   },
                   child: Container(

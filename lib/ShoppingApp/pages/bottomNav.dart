@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:phoneauth/ShoppingApp/pages/homePage.dart';
 import 'package:phoneauth/ShoppingApp/pages/orderPage.dart';
 import 'package:phoneauth/ShoppingApp/pages/profilePage.dart';
-
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 class bottomNav extends StatefulWidget {
@@ -18,14 +17,34 @@ class _bottomNavState extends State<bottomNav> {
   late orderPage orderrPage;
   late profilePage profileePage;
   int currentTabIndex = 0;
+
+  bool _isUploading = false; // Track the upload status
+
+  // Method to disable navigation
+  void startImageUpload() {
+    setState(() {
+      _isUploading = true;
+    });
+  }
+
+  // Method to enable navigation
+  void finishImageUpload() {
+    setState(() {
+      _isUploading = false;
+    });
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
+    super.initState();
     homeePage = homePage();
     orderrPage = orderPage();
-    profileePage = profilePage();
+
+    // Pass valid callbacks to profilePage
+    profileePage = profilePage(
+        onImageUpload: startImageUpload,
+        onImageUploadFinish: finishImageUpload);
     pages = [homeePage, orderrPage, profileePage];
-    super.initState();
   }
 
   @override
@@ -37,9 +56,11 @@ class _bottomNavState extends State<bottomNav> {
           color: Colors.black,
           animationDuration: Duration(milliseconds: 500),
           onTap: (int index) {
-            setState(() {
-              currentTabIndex = index;
-            });
+            if (!_isUploading) {
+              setState(() {
+                currentTabIndex = index;
+              });
+            }
           },
           items: [
             Icon(

@@ -12,6 +12,7 @@ import 'package:phoneauth/ShoppingApp/pages/loginPage.dart';
 import 'package:phoneauth/ShoppingApp/pages/onBoardingPage.dart';
 import 'package:phoneauth/ShoppingApp/pages/productDetailPage.dart';
 import 'package:phoneauth/ShoppingApp/pages/productsCategory.dart';
+import 'package:phoneauth/ShoppingApp/pages/testProdcutPage.dart';
 import 'package:phoneauth/ShoppingApp/services/constant.dart';
 import 'package:phoneauth/ui/auth/signUpScreen.dart';
 import 'package:phoneauth/ui/fireStore/firestoreListScreen.dart';
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
               fontSize: 20,
             )),
       ),
-      home: loginPage(),
+      home: splashScreen(),
     );
   }
 }

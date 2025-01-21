@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:phoneauth/ShoppingApp/services/database.dart';
-import 'package:phoneauth/ShoppingApp/services/sharedPreference.dart';
-import 'package:phoneauth/ShoppingApp/widgets/supportWidget.dart';
 import 'package:phoneauth/ui/utils/utils.dart';
 
 class allOrders extends StatefulWidget {
-  const allOrders({super.key});
+  const allOrders({Key? key}) : super(key: key);
 
   @override
   State<allOrders> createState() => _allOrdersState();
@@ -14,20 +12,19 @@ class allOrders extends StatefulWidget {
 
 class _allOrdersState extends State<allOrders> {
   Stream? orderStream;
-  String? email;
+
   @override
   void initState() {
     super.initState();
-    getOnTheLoad();
+    fetchOrders();
   }
 
-  Future<void> getOnTheLoad() async {
+  Future<void> fetchOrders() async {
     orderStream = await databaseMethods().allOrders();
-
     setState(() {});
   }
 
-  Widget allOrders() {
+  Widget orderList(double screenWidth, double screenHeight) {
     return StreamBuilder(
       stream: orderStream,
       builder: (context, AsyncSnapshot snapshot) {
@@ -48,84 +45,104 @@ class _allOrdersState extends State<allOrders> {
           itemBuilder: (context, index) {
             DocumentSnapshot ds = snapshot.data.docs[index];
             return Container(
-              margin: const EdgeInsets.only(bottom: 10),
+              margin: EdgeInsets.symmetric(
+                vertical: screenHeight * 0.01,
+              ),
               child: Material(
                 elevation: 3,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(screenWidth * 0.03),
                 child: Container(
-                  width: MediaQuery.of(context).size.width,
+                  padding: EdgeInsets.all(screenWidth * 0.03),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
                     color: Colors.white,
                   ),
-                  child: Stack(
+                  child: Row(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: 10, top: 10, bottom: 10, right: 10),
-                        child: Row(
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                        child: Image.network(
+                          ds['userImage'],
+                          height: screenHeight * 0.12,
+                          width: screenWidth * 0.2,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Image.network(
-                              ds['userImage'],
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover,
+                            Text(
+                              'Name: ${ds['userName']}',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
-                            Spacer(),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Name: ' + ds['userName'],
-                                  style: appWidget.semiBoldTextFieldStyle(),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'Email: ' + ds['Email'],
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w400),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  ds['productName'],
-                                  style: appWidget.semiBoldTextFieldStyle(),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  '\$${ds['Price']}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFfd6f3e),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                GestureDetector(
-                                  onTap: () async {
-                                    databaseMethods().updateStatus(ds['Id']);
-                                    setState(() {});
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                        color: Color(0xFFfd6f3e),
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    child: Center(
-                                        child: Text(
-                                      'Done',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500),
-                                    )),
-                                  ),
-                                )
-                              ],
+                            SizedBox(height: screenHeight * 0.01),
+                            Text(
+                              'Email: ${ds['Email']}',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.035,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey[800],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            SizedBox(height: screenHeight * 0.01),
+                            Text(
+                              ds['productName'],
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            SizedBox(height: screenHeight * 0.01),
+                            Text(
+                              '\$${ds['Price']}',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.05,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFfd6f3e),
+                              ),
                             ),
                           ],
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      GestureDetector(
+                        onTap: () async {
+                          await databaseMethods().updateStatus(ds['Id']);
+                          setState(() {});
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: screenHeight * 0.01,
+                            horizontal: screenWidth * 0.04,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFfd6f3e),
+                            borderRadius:
+                                BorderRadius.circular(screenWidth * 0.02),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Done',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -141,47 +158,29 @@ class _allOrdersState extends State<allOrders> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(
           'All Orders',
-          style: appWidget.boldTextFieldStyle(),
+          style: TextStyle(
+            fontSize: screenWidth * 0.06,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
       ),
       body: Container(
-        margin: EdgeInsets.only(right: 20, left: 20),
+        margin: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.05,
+        ),
         child: Column(
-          children: [Expanded(child: allOrders())],
+          children: [Expanded(child: orderList(screenWidth, screenHeight))],
         ),
       ),
     );
-  }
-
-  Future<void> showMyDialog(String Id) async {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Are you sure?'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    databaseMethods().deleteOrder(Id).then((value) {
-                      Utils().toastMessage('Order Deleted');
-                    }).onError((error, StackTrace) {
-                      Utils().toastMessage(error.toString());
-                    });
-                  },
-                  child: const Text('Delete')),
-            ],
-          );
-        });
   }
 }

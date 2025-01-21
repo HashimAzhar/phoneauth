@@ -57,6 +57,11 @@ class databaseMethods {
         .snapshots();
   }
 
+  Future<Stream<QuerySnapshot>> getProductssH() async {
+    print("Fetching all products...");
+    return FirebaseFirestore.instance.collection('Productss').snapshots();
+  }
+
   Future<Stream<QuerySnapshot>> HshmHomePageDetails(String email) async {
     print("Fetching orders for email: $email"); // Debugging line
     return FirebaseFirestore.instance

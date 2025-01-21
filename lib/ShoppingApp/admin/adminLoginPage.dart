@@ -169,13 +169,14 @@ class _adminLoginPageState extends State<adminLoginPage> {
             content: Text('Your Password is not correct'),
           ));
         } else {
-          Navigator.push(context,
+          Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => adminHomePage()));
-          ScaffoldMessenger(
-              child: SnackBar(
-            backgroundColor: Colors.blue,
-            content: Text('Your Password is not correct'),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: Colors.blue,
+              content: Text(
+                'Log In Successfully',
+                style: TextStyle(fontSize: 20),
+              )));
         }
       });
     });

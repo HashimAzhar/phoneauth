@@ -25,50 +25,35 @@ class _loginPageState extends State<loginPage> {
   // Function to fetch user details by email from Firestore and save to SharedPreferences
   Future<void> fetchAndSaveUserDetailsByEmail(String email) async {
     try {
-      print("Fetching details for email: $email");
-
-      // Query Firestore for user details by email
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Userss')
           .where('Email', isEqualTo: email)
           .get();
 
-      print("Query result: ${querySnapshot.docs.length} documents found.");
-
       if (querySnapshot.docs.isNotEmpty) {
-        // Get the first matching document
         DocumentSnapshot userDoc = querySnapshot.docs.first;
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
 
-        // Extract user data
-        Map<String, dynamic>? userData =
-            userDoc.data() as Map<String, dynamic>?;
-
-        if (userData != null) {
-          // Save details in SharedPreferences
-          await sharedPreferenceHelper().saveUserName(userData['Name']);
-          await sharedPreferenceHelper().saveUserEmail(userData['Email']);
-          await sharedPreferenceHelper().saveUserImage(userData['Image']);
-          print("User details saved successfully.");
-        } else {
-          print("User data is null.");
-        }
+        await sharedPreferenceHelper().saveUserName(userData['Name ']);
+        await sharedPreferenceHelper().saveUserEmail(userData['Email']);
+        await sharedPreferenceHelper().saveUserImage(userData['Image']);
       } else {
-        print("No user found with the provided email.");
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.redAccent,
-            content: Text(
-              'No user found with the provided email.',
-              style: TextStyle(fontSize: 16),
-            )));
-      }
-    } catch (e) {
-      print("Error fetching user details: $e");
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           backgroundColor: Colors.redAccent,
           content: Text(
-            'Error fetching user details.',
+            'No user found with the provided email.',
             style: TextStyle(fontSize: 16),
-          )));
+          ),
+        ));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.redAccent,
+        content: Text(
+          'Error fetching user details.',
+          style: TextStyle(fontSize: 16),
+        ),
+      ));
     }
   }
 
@@ -79,43 +64,65 @@ class _loginPageState extends State<loginPage> {
         isLoading = true;
       });
 
-      // Sign in with Firebase Authentication
+      // Attempt to sign in
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
+      // Log successful login
       print("User logged in: ${userCredential.user?.email}");
 
-      // Fetch and save user details after successful login
+      // Fetch and save user details
       await fetchAndSaveUserDetailsByEmail(email);
 
       // Navigate to the home page
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => bottomNav()));
+        context,
+        MaterialPageRoute(builder: (context) => bottomNav()),
+      );
 
-      // Show success message
+      // Show success snackbar
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          backgroundColor: Colors.blue,
-          content: Text(
-            'Login Successfully',
-            style: TextStyle(fontSize: 20),
-          )));
+        backgroundColor: Colors.blue,
+        content: Text(
+          'Login Successfully',
+          style: TextStyle(fontSize: 20),
+        ),
+      ));
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.redAccent,
-            content: Text(
-              'No User Found for that Email',
-              style: TextStyle(fontSize: 20),
-            )));
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'No User Found for that Email',
+            style: TextStyle(fontSize: 20),
+          ),
+        ));
       } else if (e.code == 'wrong-password') {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.redAccent,
-            content: Text(
-              'Wrong Password Added by the User',
-              style: TextStyle(fontSize: 20),
-            )));
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Wrong Password Added by the User',
+            style: TextStyle(fontSize: 20),
+          ),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Login failed: ${e.message}',
+            style: TextStyle(fontSize: 20),
+          ),
+        ));
       }
+      print("FirebaseAuthException: ${e.message}");
     } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.redAccent,
+        content: Text(
+          'An unexpected error occurred. Please try again later.',
+          style: TextStyle(fontSize: 20),
+        ),
+      ));
       print("Error during login: $e");
     } finally {
       setState(() {
@@ -244,7 +251,7 @@ class _loginPageState extends State<loginPage> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => signUPPage()));
